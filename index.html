@@ -1,76 +1,58 @@
 <!DOCTYPE html>
 
-<html lang="en-us"> <head> <meta charset="utf-8"> <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> <title>Unity WebGL Player | Survivor.IO</title> <style> /* Senior Engineer Note: Merged grid.html logic into the main player. Removed the white borders by targeting the unity-desktop class and removing default padding/backgrounds from TemplateData/style.css. / body { margin: 0; padding: 0; / Integrated Grid Background from grid.html / background-color: #0a0a0a; background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px); background-size: 50px 50px; height: 100dvh; / Dynamic viewport height for 844px+ screens */ display: flex; justify-content: center; align-items: center; overflow: hidden; }
+<html lang="en-us"> <head> <meta charset="utf-8"> <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> <title>Unity WebGL Player | Survivor.IO</title> <style> /* Senior Engineer Note: The "black screen" occurred because the previous CSS overrides were too aggressive. We have restored the Unity Canvas visibility while stripping the white "TemplateData" borders and keeping your grid. / body { margin: 0; padding: 0; / Integrated Grid Background from grid.html */ background-color: #0a0a0a; background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px); background-size: 50px 50px; height: 100dvh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
 
 #unity-container {
   position: relative;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100dvh;
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  /* Remove any background/border that causes the 'white boarder' issue */
-  background: transparent !important; 
-  padding: 0 !important;
+  background: transparent !important; /* Forces removal of white background */
 }
 
 #unity-canvas {
-  /* Remove default borders and shadows from Unity template */
-  border: none !important;
-  background: #000 !important;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-  /* Use 100% of available height to solve the 'range too small' problem */
-  height: 100dvh !important;
+  /* This ensures the game is visible and fills the screen height */
+  display: block !important; 
   width: auto !important;
-  aspect-ratio: 960 / 600; /* Maintains original aspect ratio */
-  display: block;
+  height: 100% !important;
+  max-width: 100vw;
+  aspect-ratio: 960 / 600; /* Standard Unity WebGL aspect ratio */
+  box-shadow: 0 0 40px rgba(0,0,0,0.8);
+  background-color: #232323; /* Dark placeholder while loading */
 }
 
-/* Hide the footer elements that take up space and show the white bar */
+/* Remove the footer entirely to maximize playable range */
 #unity-footer {
   display: none !important;
 }
 
 #unity-loading-bar {
   position: absolute;
-  z-index: 10;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: none;
 }
 
 #unity-progress-bar-empty {
   width: 200px;
   height: 10px;
   background: rgba(255,255,255,0.1);
-  border-radius: 5px;
+  border-radius: 10px;
 }
 
 #unity-progress-bar-full {
+  width: 0%;
   height: 100%;
   background: #fff;
-  border-radius: 5px;
+  border-radius: 10px;
   transition: width 0.3s ease;
 }
-</style> </head> <body> <div id="unity-container"> <canvas id="unity-canvas"></canvas> <div id="unity-loading-bar"> <div id="unity-progress-bar-empty"> <div id="unity-progress-bar-full"></div> </div> </div> <div id="unity-warning"> </div> </div>
+</style> </head> <body> <div id="unity-container"> <canvas id="unity-canvas" tabindex="-1"></canvas> <div id="unity-loading-bar"> <div id="unity-progress-bar-empty"> <div id="unity-progress-bar-full"></div> </div> </div> </div>
 
-<script> var container = document.querySelector("#unity-container"); var canvas = document.querySelector("#unity-canvas"); var loadingBar = document.querySelector("#unity-loading-bar"); var progressBarFull = document.querySelector("#unity-progress-bar-full"); var warningBanner = document.querySelector("#unity-warning");
-
-function unityShowBanner(msg, type) {
-  function updateBannerVisibility() {
-    warningBanner.style.display = warningBanner.children.length ? &#39;block&#39; : &#39;none&#39;;
-  }
-  var div = document.createElement(&#39;div&#39;);
-  div.innerHTML = msg;
-  warningBanner.appendChild(div);
-  if (type == &#39;error&#39;) div.style = &#39;background: red; color: white; padding: 10px;&#39;;
-  else {
-    if (type == &#39;warning&#39;) div.style = &#39;background: yellow; padding: 10px;&#39;;
-    setTimeout(function() {
-      if(div.parentNode) warningBanner.removeChild(div);
-      updateBannerVisibility();
-    }, 5000);
-  }
-  updateBannerVisibility();
-}
+<script> var container = document.querySelector("#unity-container"); var canvas = document.querySelector("#unity-canvas"); var loadingBar = document.querySelector("#unity-loading-bar"); var progressBarFull = document.querySelector("#unity-progress-bar-full");
 
 var buildUrl = &quot;Build&quot;;
 var loaderUrl = buildUrl + &quot;/TEST.loader.js&quot;;
@@ -82,7 +64,6 @@ var config = {
   companyName: &quot;DefaultCompany&quot;,
   productName: &quot;Survivor.IO&quot;,
   productVersion: &quot;1.0&quot;,
-  showBanner: unityShowBanner,
 };
 
 loadingBar.style.display = &quot;block&quot;;
@@ -94,8 +75,10 @@ script.onload = () =&gt; {
     progressBarFull.style.width = 100 * progress + &quot;%&quot;;
   }).then((unityInstance) =&gt; {
     loadingBar.style.display = &quot;none&quot;;
+    // Ensure focus so controls work immediately
+    canvas.focus();
   }).catch((message) =&gt; {
-    console.error(message);
+    alert(&quot;Unity Load Error: &quot; + message);
   });
 };
 document.body.appendChild(script);
